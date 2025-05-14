@@ -254,7 +254,7 @@ export const FinanceProvider: React.FC<{ children: ReactNode }> = ({ children })
     setMonthsData(updatedMonthsData);
   };
 
-  // Get monthly summary
+  // Get monthly summary - Fixed to exclude savings from balance calculation
   const getMonthSummary = (month: number, year: number): MonthSummary => {
     const monthData = monthsData.find((data) => data.month === month && data.year === year);
     
@@ -270,7 +270,8 @@ export const FinanceProvider: React.FC<{ children: ReactNode }> = ({ children })
     const totalIncome = monthData.incomes.reduce((sum, income) => sum + income.amount, 0);
     const totalExpenses = monthData.expenses.reduce((sum, expense) => sum + expense.amount, 0);
     const totalSaved = monthData.savingsGoals.reduce((sum, goal) => sum + goal.savedAmount, 0);
-    const balance = totalIncome - totalExpenses - totalSaved;
+    // Fix: Calculate balance as income minus expenses, WITHOUT subtracting saved amount
+    const balance = totalIncome - totalExpenses;
     
     return {
       totalIncome,

@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React from "react";
 import { 
   Calendar, 
   ChartPie, 
@@ -35,7 +35,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({
   activeTab,
   setActiveTab 
 }) => {
-  const { collapsed } = useSidebar();
+  const sidebar = useSidebar();
   const { currentMonth, currentYear, setCurrentMonth, setCurrentYear } = useFinance();
   
   // Navigation items
@@ -85,24 +85,24 @@ const AppLayout: React.FC<AppLayoutProps> = ({
     <div className="flex min-h-screen w-full">
       <Sidebar
         className={cn(
-          collapsed ? "w-16" : "w-64",
+          sidebar.state === "collapsed" ? "w-16" : "w-64",
           "transition-width duration-300 ease-in-out"
         )}
-        collapsible
+        collapsible="icon"
       >
         <SidebarTrigger className="m-2 self-end" />
         
         <div className="flex flex-col items-center py-4">
           <h1 className={cn(
             "font-bold",
-            collapsed ? "text-sm" : "text-xl"
+            sidebar.state === "collapsed" ? "text-sm" : "text-xl"
           )}>
-            {collapsed ? "F$" : "Finanças Familiar"}
+            {sidebar.state === "collapsed" ? "F$" : "Finanças Familiar"}
           </h1>
         </div>
         
         <SidebarContent>
-          {!collapsed && renderMonthSelector()}
+          {sidebar.state !== "collapsed" && renderMonthSelector()}
           
           <SidebarGroup>
             <SidebarGroupContent>
@@ -119,10 +119,10 @@ const AppLayout: React.FC<AppLayoutProps> = ({
                       <item.icon 
                         className={cn(
                           "h-5 w-5",
-                          collapsed ? "mx-auto" : "mr-2"
+                          sidebar.state === "collapsed" ? "mx-auto" : "mr-2"
                         )} 
                       />
-                      {!collapsed && <span>{item.label}</span>}
+                      {sidebar.state !== "collapsed" && <span>{item.label}</span>}
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 ))}

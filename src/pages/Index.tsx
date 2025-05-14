@@ -49,7 +49,7 @@ const Index = () => {
 
   return (
     <FinanceProvider>
-      <SidebarProvider collapsedWidth={64}>
+      <SidebarProvider defaultOpen={true}>
         <AppLayout activeTab={activeTab} setActiveTab={setActiveTab}>
           {renderActiveComponent()}
         </AppLayout>

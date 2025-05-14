@@ -1,4 +1,3 @@
-
 import React, { createContext, useState, useContext, ReactNode } from "react";
 import { v4 as uuidv4 } from "uuid";
 import { MonthData, Income, Expense, SavingsGoal, FoodAllowance, Month, MonthSummary } from "../types/finance";

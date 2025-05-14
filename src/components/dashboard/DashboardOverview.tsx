@@ -22,12 +22,27 @@ import {
   Pie,
   Cell,
 } from "recharts";
-import { ArrowDown, ArrowUp, Coins, PiggyBank } from "lucide-react";
+import { ArrowDown, ArrowUp, Coins, PiggyBank, Receipt } from "lucide-react";
 
 const DashboardOverview: React.FC = () => {
   const { currentMonth, currentYear, getCurrentMonthData, getMonthSummary } = useFinance();
   const monthData = getCurrentMonthData();
   const summary = getMonthSummary(currentMonth, currentYear);
+
+  // Calculate total food allowance information
+  const totalAllowanceAmount = monthData.foodAllowances.reduce(
+    (sum, allowance) => sum + allowance.totalAmount, 0
+  );
+  
+  const totalUsedAmount = monthData.foodAllowances.reduce(
+    (sum, allowance) => sum + allowance.usedAmount, 0
+  );
+  
+  const totalRemainingAmount = Math.max(totalAllowanceAmount - totalUsedAmount, 0);
+  
+  const usagePercentage = totalAllowanceAmount > 0 
+    ? Math.min(Math.round((totalUsedAmount / totalAllowanceAmount) * 100), 100) 
+    : 0;
 
   // Prepare data for bar chart
   const barChartData = [
@@ -131,6 +146,71 @@ const DashboardOverview: React.FC = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Food Allowance Section */}
+      <Card className="border border-[#9b87f5]/20 bg-[#9b87f5]/5">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Receipt className="h-5 w-5 text-[#9b87f5]" />
+            Vale-Alimentação
+          </CardTitle>
+          <CardDescription>
+            Resumo do vale-alimentação para o mês atual
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {monthData.foodAllowances.length > 0 ? (
+            <div className="space-y-6">
+              {/* Overall progress */}
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span>Utilização total: {usagePercentage}%</span>
+                  <span>{formatCurrency(totalUsedAmount)} de {formatCurrency(totalAllowanceAmount)}</span>
+                </div>
+                <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-[#9b87f5]"
+                    style={{ width: `${usagePercentage}%` }}
+                  ></div>
+                </div>
+              </div>
+
+              {/* Individual allowances */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {monthData.foodAllowances.map((allowance) => {
+                  const individualPercentage = allowance.totalAmount > 0
+                    ? Math.min(Math.round((allowance.usedAmount / allowance.totalAmount) * 100), 100)
+                    : 0;
+                  const remaining = Math.max(allowance.totalAmount - allowance.usedAmount, 0);
+
+                  return (
+                    <div key={allowance.id} className="p-3 bg-white rounded-lg shadow-sm border border-gray-100">
+                      <div className="flex justify-between items-center mb-2">
+                        <h4 className="font-medium">{allowance.person}</h4>
+                        <span className="text-sm text-gray-500">{individualPercentage}% usado</span>
+                      </div>
+                      <div className="h-1.5 w-full bg-gray-100 rounded-full overflow-hidden mb-2">
+                        <div
+                          className={`h-full ${individualPercentage > 80 ? 'bg-red-500' : 'bg-green-500'}`}
+                          style={{ width: `${individualPercentage}%` }}
+                        ></div>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-600">Usado: {formatCurrency(allowance.usedAmount)}</span>
+                        <span className="text-green-600">Saldo: {formatCurrency(remaining)}</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ) : (
+            <div className="text-center py-4 text-gray-500">
+              Nenhum vale-alimentação registrado para este mês
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

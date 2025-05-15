@@ -6,9 +6,11 @@ import {
   DollarSign, 
   Receipt, 
   PiggyBank, 
-  Wallet 
+  Wallet, 
+  Menu 
 } from "lucide-react";
 import { useFinance } from "../../contexts/FinanceContext";
+import { useAuth } from "../../contexts/AuthContext";
 import { getMonthName } from "../../utils/formatters";
 import {
   Sidebar,
@@ -23,6 +25,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
+import { useMediaQuery } from "@/hooks/use-mobile";
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -37,6 +40,15 @@ const AppLayout: React.FC<AppLayoutProps> = ({
 }) => {
   const sidebar = useSidebar();
   const { currentMonth, currentYear, setCurrentMonth, setCurrentYear } = useFinance();
+  const { profile } = useAuth();
+  const isMobile = useMediaQuery("(max-width: 768px)");
+  
+  // Fechar a sidebar automaticamente no mobile
+  React.useEffect(() => {
+    if (isMobile && sidebar.state !== "collapsed") {
+      sidebar.collapse();
+    }
+  }, [isMobile]);
   
   // Navigation items
   const navItems = [
@@ -88,7 +100,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({
           sidebar.state === "collapsed" ? "w-16" : "w-64",
           "transition-width duration-300 ease-in-out"
         )}
-        collapsible="icon"
+        collapsible={isMobile ? false : "icon"}
       >
         <SidebarTrigger className="m-2 self-end" />
         
@@ -97,8 +109,11 @@ const AppLayout: React.FC<AppLayoutProps> = ({
             "font-bold",
             sidebar.state === "collapsed" ? "text-sm" : "text-xl"
           )}>
-            {sidebar.state === "collapsed" ? "F$" : "Finanças Familiar"}
+            {sidebar.state === "collapsed" ? "G$" : "Grana Familiar"}
           </h1>
+          {profile && sidebar.state !== "collapsed" && (
+            <p className="text-xs text-muted-foreground mt-1">Olá, {profile.name}</p>
+          )}
         </div>
         
         <SidebarContent>
@@ -114,7 +129,10 @@ const AppLayout: React.FC<AppLayoutProps> = ({
                         "w-full flex items-center p-2 rounded-md",
                         activeTab === item.id && "bg-primary/10 text-primary font-medium"
                       )}
-                      onClick={() => setActiveTab(item.id)}
+                      onClick={() => {
+                        setActiveTab(item.id);
+                        if (isMobile) sidebar.collapse();
+                      }}
                     >
                       <item.icon 
                         className={cn(
@@ -132,12 +150,21 @@ const AppLayout: React.FC<AppLayoutProps> = ({
         </SidebarContent>
       </Sidebar>
       
-      <div className="flex-1 p-6">
+      <div className="flex-1 p-3 md:p-6 overflow-x-hidden">
         <header className="mb-6">
-          <h1 className="text-2xl font-bold">
+          {isMobile && (
+            <button 
+              onClick={() => sidebar.state === "open" ? sidebar.collapse() : sidebar.expand()} 
+              className="md:hidden mb-4 p-2 rounded-md hover:bg-gray-100"
+            >
+              <Menu className="h-5 w-5" />
+            </button>
+          )}
+          
+          <h1 className="text-xl md:text-2xl font-bold">
             {getMonthName(currentMonth)} {currentYear}
           </h1>
-          <h2 className="text-lg font-medium text-gray-600">
+          <h2 className="text-md md:text-lg font-medium text-gray-600">
             {navItems.find(item => item.id === activeTab)?.label}
           </h2>
         </header>

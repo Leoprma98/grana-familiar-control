@@ -25,7 +25,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
-import { useMediaQuery } from "@/hooks/use-mobile";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -41,14 +41,14 @@ const AppLayout: React.FC<AppLayoutProps> = ({
   const sidebar = useSidebar();
   const { currentMonth, currentYear, setCurrentMonth, setCurrentYear } = useFinance();
   const { profile } = useAuth();
-  const isMobile = useMediaQuery("(max-width: 768px)");
+  const isMobile = useIsMobile();
   
   // Fechar a sidebar automaticamente no mobile
   React.useEffect(() => {
     if (isMobile && sidebar.state !== "collapsed") {
-      sidebar.collapse();
+      sidebar.setOpen(false); // Using setOpen(false) instead of collapse()
     }
-  }, [isMobile]);
+  }, [isMobile, sidebar]);
   
   // Navigation items
   const navItems = [
@@ -100,7 +100,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({
           sidebar.state === "collapsed" ? "w-16" : "w-64",
           "transition-width duration-300 ease-in-out"
         )}
-        collapsible={isMobile ? false : "icon"}
+        collapsible={isMobile ? "offcanvas" : "icon"}
       >
         <SidebarTrigger className="m-2 self-end" />
         
@@ -131,7 +131,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({
                       )}
                       onClick={() => {
                         setActiveTab(item.id);
-                        if (isMobile) sidebar.collapse();
+                        if (isMobile) sidebar.setOpen(false); // Using setOpen instead of collapse
                       }}
                     >
                       <item.icon 
@@ -154,7 +154,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({
         <header className="mb-6">
           {isMobile && (
             <button 
-              onClick={() => sidebar.state === "open" ? sidebar.collapse() : sidebar.expand()} 
+              onClick={() => sidebar.state === "collapsed" ? sidebar.setOpen(true) : sidebar.setOpen(false)}
               className="md:hidden mb-4 p-2 rounded-md hover:bg-gray-100"
             >
               <Menu className="h-5 w-5" />

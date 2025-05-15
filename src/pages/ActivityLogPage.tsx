@@ -18,7 +18,7 @@ interface ActivityLog {
   created_at: string;
   profiles?: {
     name: string;
-  };
+  } | null;
 }
 
 const ActivityLogPage: React.FC = () => {
@@ -47,7 +47,9 @@ const ActivityLogPage: React.FC = () => {
           
           if (error) throw error;
           
-          setActivityLogs(data as ActivityLog[]);
+          // Convert the data to the expected type
+          const typedData = data as unknown as ActivityLog[];
+          setActivityLogs(typedData);
         } catch (error) {
           console.error("Erro ao buscar histórico de atividades:", error);
         } finally {

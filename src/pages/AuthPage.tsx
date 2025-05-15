@@ -1,5 +1,4 @@
-
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -12,6 +11,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { ChevronLeft, Lock, Mail, User, Users } from "lucide-react";
+import { toast } from "sonner";
 
 // Esquema de validação para login
 const loginSchema = z.object({
@@ -55,12 +55,18 @@ const AuthPage: React.FC = () => {
     }
   });
   
+  // Limpar formulários quando trocar de tab
+  useEffect(() => {
+    loginForm.reset();
+    registerForm.reset();
+  }, [authTab]);
+  
   // Handler para login
   const handleLogin = async (values: LoginFormValues) => {
     try {
       setIsSubmitting(true);
       await signIn(values.email, values.password);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Erro ao fazer login:", error);
     } finally {
       setIsSubmitting(false);
@@ -77,8 +83,9 @@ const AuthPage: React.FC = () => {
         values.name,
         values.familyCode && values.familyCode.trim() !== "" ? values.familyCode : undefined
       );
-    } catch (error) {
+    } catch (error: any) {
       console.error("Erro ao registrar:", error);
+      // Erros já são tratados no AuthContext com toast
     } finally {
       setIsSubmitting(false);
     }

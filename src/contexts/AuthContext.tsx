@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useEffect, useState } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
@@ -55,6 +54,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       // Configurar o listener para mudanças de estado de autenticação
       const { data: { subscription } } = supabase.auth.onAuthStateChange(
         (event, session) => {
+          console.log("Auth state changed:", event, session?.user?.email);
           setSession(session);
           setUser(session?.user || null);
           
@@ -162,6 +162,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         await supabase.auth.signOut({ scope: 'global' });
       } catch (err) {
         // Continua mesmo se falhar
+        console.log("Erro no logout global (ignorável):", err);
       }
       
       // Determinar família - procurar pelo código ou criar nova
@@ -219,6 +220,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         await supabase.auth.signOut({ scope: 'global' });
       } catch (err) {
         // Continua mesmo se falhar
+        console.log("Erro no logout global (ignorável):", err);
       }
       
       const { data, error } = await supabase.auth.signInWithPassword({
@@ -233,8 +235,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
       
     } catch (error: any) {
+      console.error("Detalhes do erro:", error);
       toast.error("Falha no login", {
-        description: error.message
+        description: error.message || "Verifique seu email e senha"
       });
       throw error;
     } finally {

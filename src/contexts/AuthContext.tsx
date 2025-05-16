@@ -25,7 +25,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         .single();
       
       if (error) {
-        console.error("Erro ao buscar perfil:", error.message, error.details);
+        console.error("Erro ao buscar perfil:", error.message);
         throw error;
       }
       
@@ -43,7 +43,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             .single();
           
           if (familyError) {
-            console.error("Erro ao buscar família:", familyError.message, familyError.details);
+            console.error("Erro ao buscar família:", familyError.message);
             throw familyError;
           }
           if (familyData) {
@@ -130,7 +130,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       const { data: codeData, error: codeError } = await supabase.rpc('generate_family_code');
       
       if (codeError) {
-        console.error("Erro ao gerar código de família:", codeError.message, codeError.details);
+        console.error("Erro ao gerar código de família:", codeError.message);
         throw codeError;
       }
       
@@ -144,7 +144,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         .single();
       
       if (error) {
-        console.error("Erro ao criar família:", error.message, error.details);
+        console.error("Erro ao criar família:", error.message);
         throw error;
       }
       
@@ -167,7 +167,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         .single();
       
       if (error) {
-        console.error("Erro ao buscar família pelo código:", error.message, error.details);
+        console.error("Erro ao buscar família pelo código:", error.message);
         throw error;
       }
       
@@ -227,7 +227,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       });
       
       if (error) {
-        console.error("Erro no cadastro:", error.message, error.details);
+        console.error("Erro no cadastro:", error.message);
         throw error;
       }
       
@@ -271,7 +271,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       });
       
       if (error) {
-        console.error("Erro no login:", error.message, error.details);
+        console.error("Erro no login:", error.message);
         throw error;
       }
       
@@ -326,7 +326,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         .eq('id', user.id);
       
       if (error) {
-        console.error("Erro ao atualizar perfil:", error.message, error.details);
+        console.error("Erro ao atualizar perfil:", error.message);
         throw error;
       }
       
@@ -385,7 +385,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         .eq('id', user.id);
       
       if (error) {
-        console.error("Erro ao atualizar perfil com nova família:", error.message, error.details);
+        console.error("Erro ao atualizar perfil com nova família:", error.message);
         throw error;
       }
       

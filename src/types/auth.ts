@@ -34,3 +34,10 @@ export interface AuthContextType {
   updateProfile: (name: string) => Promise<void>;
   joinFamily: (familyCode: string) => Promise<void>;
 }
+
+export type AuthAction = 
+  | 'signup'
+  | 'login'
+  | 'logout' 
+  | 'update_profile' 
+  | 'join_family';

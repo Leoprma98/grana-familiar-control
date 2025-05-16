@@ -272,6 +272,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      create_family: {
+        Args: { family_code: string }
+        Returns: Json
+      }
       generate_family_code: {
         Args: Record<PropertyKey, never>
         Returns: string

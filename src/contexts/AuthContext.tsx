@@ -1,3 +1,4 @@
+
 import { createContext, useContext, useEffect, useState } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
@@ -16,6 +17,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   // Função para buscar o perfil do usuário
   const fetchProfile = async (userId: string) => {
     try {
+      console.log("Buscando perfil para usuário:", userId);
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
@@ -23,22 +25,33 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         .single();
       
       if (error) {
+        console.error("Erro ao buscar perfil:", error.message, error.details);
         throw error;
       }
       
       if (data) {
+        console.log("Perfil encontrado:", data);
         setProfile(data as Profile);
         
         // Buscar informações da família
         if (data.family_id) {
+          console.log("Buscando família:", data.family_id);
           const { data: familyData, error: familyError } = await supabase
             .from('families')
             .select('*')
             .eq('id', data.family_id)
             .single();
           
-          if (familyError) throw familyError;
-          if (familyData) setFamily(familyData as Family);
+          if (familyError) {
+            console.error("Erro ao buscar família:", familyError.message, familyError.details);
+            throw familyError;
+          }
+          if (familyData) {
+            console.log("Família encontrada:", familyData);
+            setFamily(familyData as Family);
+          }
+        } else {
+          console.log("Usuário não tem família associada");
         }
       }
     } catch (error: any) {
@@ -112,10 +125,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   // Função para criar uma nova família
   const createFamily = async () => {
     try {
+      console.log("Criando nova família");
       // Gerar código de família usando nossa função SQL
       const { data: codeData, error: codeError } = await supabase.rpc('generate_family_code');
       
-      if (codeError) throw codeError;
+      if (codeError) {
+        console.error("Erro ao gerar código de família:", codeError.message, codeError.details);
+        throw codeError;
+      }
+      
+      console.log("Código de família gerado:", codeData);
       
       // Criar nova entrada na tabela de famílias
       const { data, error } = await supabase
@@ -124,8 +143,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         .select()
         .single();
       
-      if (error) throw error;
+      if (error) {
+        console.error("Erro ao criar família:", error.message, error.details);
+        throw error;
+      }
       
+      console.log("Família criada com sucesso:", data);
       return data;
     } catch (error: any) {
       console.error("Erro ao criar família:", error.message);
@@ -136,15 +159,22 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   // Função para encontrar uma família pelo código
   const findFamilyByCode = async (code: string) => {
     try {
+      console.log("Buscando família pelo código:", code);
       const { data, error } = await supabase
         .from('families')
         .select('*')
         .eq('code', code)
         .single();
       
-      if (error) throw error;
+      if (error) {
+        console.error("Erro ao buscar família pelo código:", error.message, error.details);
+        throw error;
+      }
+      
+      console.log("Família encontrada:", data);
       return data;
     } catch (error) {
+      console.error("Família não encontrada ou erro:", error);
       return null;
     }
   };
@@ -172,12 +202,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         // Procurar família existente pelo código
         family = await findFamilyByCode(familyCode);
         if (!family) {
+          toast.error("Erro no cadastro", {
+            description: "Código de família não encontrado"
+          });
           throw new Error("Código de família não encontrado");
         }
       } else {
         // Criar nova família
         family = await createFamily();
       }
+      
+      console.log("Família para cadastro:", family);
       
       // Registrar usuário com metadados para o trigger SQL
       const { data, error } = await supabase.auth.signUp({
@@ -191,13 +226,20 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         }
       });
       
-      if (error) throw error;
+      if (error) {
+        console.error("Erro no cadastro:", error.message, error.details);
+        throw error;
+      }
       
       if (data.user) {
         toast.success("Conta criada com sucesso!");
+        console.log("Usuário registrado com sucesso:", data.user.email);
+      } else {
+        console.log("Criação de usuário retornou:", data);
       }
       
     } catch (error: any) {
+      console.error("Erro completo ao criar conta:", error);
       toast.error("Erro ao criar conta", {
         description: error.message
       });
@@ -228,9 +270,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         password
       });
       
-      if (error) throw error;
+      if (error) {
+        console.error("Erro no login:", error.message, error.details);
+        throw error;
+      }
       
       if (data.user) {
+        console.log("Login realizado com sucesso:", data.user.email);
         toast.success("Login realizado com sucesso!");
       }
       
@@ -260,6 +306,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       window.location.href = '/auth';
       
     } catch (error: any) {
+      console.error("Erro ao fazer logout:", error.message);
       toast.error("Erro ao fazer logout", {
         description: error.message
       });
@@ -278,7 +325,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         .update({ name, updated_at: new Date().toISOString() })
         .eq('id', user.id);
       
-      if (error) throw error;
+      if (error) {
+        console.error("Erro ao atualizar perfil:", error.message, error.details);
+        throw error;
+      }
       
       // Atualizar estado local
       if (profile) {
@@ -291,14 +341,20 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       toast.success("Perfil atualizado com sucesso!");
       
       // Registrar atividade
-      await supabase.from('activity_logs').insert({
-        user_id: user.id,
-        family_id: profile?.family_id,
-        action_type: 'update_profile',
-        description: 'Perfil atualizado'
-      });
+      try {
+        await supabase.from('activity_logs').insert({
+          user_id: user.id,
+          family_id: profile?.family_id,
+          action_type: 'update_profile',
+          description: 'Perfil atualizado'
+        });
+      } catch (error) {
+        console.error("Erro ao registrar atividade:", error);
+        // Não interromper o fluxo por erro no log
+      }
       
     } catch (error: any) {
+      console.error("Erro completo ao atualizar perfil:", error);
       toast.error("Erro ao atualizar perfil", {
         description: error.message
       });
@@ -313,6 +369,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       // Encontrar família pelo código
       const family = await findFamilyByCode(familyCode);
       if (!family) {
+        toast.error("Erro ao ingressar na família", {
+          description: "Código de família não encontrado"
+        });
         throw new Error("Código de família não encontrado");
       }
       
@@ -325,7 +384,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         })
         .eq('id', user.id);
       
-      if (error) throw error;
+      if (error) {
+        console.error("Erro ao atualizar perfil com nova família:", error.message, error.details);
+        throw error;
+      }
       
       // Atualizar estado local
       setProfile({
@@ -338,14 +400,20 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       toast.success("Ingressado em nova família com sucesso!");
       
       // Registrar atividade
-      await supabase.from('activity_logs').insert({
-        user_id: user.id,
-        family_id: family.id,
-        action_type: 'join_family',
-        description: 'Ingressou em nova família'
-      });
+      try {
+        await supabase.from('activity_logs').insert({
+          user_id: user.id,
+          family_id: family.id,
+          action_type: 'join_family',
+          description: 'Ingressou em nova família'
+        });
+      } catch (error) {
+        console.error("Erro ao registrar atividade:", error);
+        // Não interromper o fluxo por erro no log
+      }
       
     } catch (error: any) {
+      console.error("Erro completo ao ingressar na família:", error);
       toast.error("Erro ao ingressar na família", {
         description: error.message
       });

@@ -17,6 +17,7 @@ export const supabase = createClient<Database>(
       storage: localStorage,
       persistSession: true,
       autoRefreshToken: true,
+      debug: true // Adicionar modo debug para ajudar na identificação de problemas
     }
   }
 );

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -68,6 +69,7 @@ const AuthPage: React.FC = () => {
       await signIn(values.email, values.password);
     } catch (error: any) {
       console.error("Erro ao fazer login:", error);
+      // Não exibir toast aqui, pois o AuthContext já exibe
     } finally {
       setIsSubmitting(false);
     }

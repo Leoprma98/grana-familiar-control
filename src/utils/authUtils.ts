@@ -42,11 +42,9 @@ export const createFamily = async (): Promise<Family> => {
     
     console.log("Código de família gerado:", codeData);
     
-    // Criar nova entrada na tabela de famílias
+    // Criar nova entrada na tabela de famílias usando a função RPC que contorna RLS
     const { data, error } = await supabase
-      .from('families')
-      .insert({ code: codeData })
-      .select()
+      .rpc('create_family', { family_code: codeData })
       .single();
     
     if (error) {

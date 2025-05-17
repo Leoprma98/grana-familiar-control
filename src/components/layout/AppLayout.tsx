@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -104,69 +105,108 @@ const AppLayout: React.FC<AppLayoutProps> = ({
 
   return (
     <div className="flex min-h-screen w-full">
-      <Sidebar
-        className={cn(
-          sidebar.state === "collapsed" ? "w-16" : "w-64",
-          "transition-width duration-300 ease-in-out"
-        )}
-        collapsible={isMobile ? "offcanvas" : "icon"}
-      >
-        <SidebarTrigger className="m-2 self-end" />
-        
-        <div className="flex flex-col items-center py-4">
-          <h1 className={cn(
-            "font-bold",
-            sidebar.state === "collapsed" ? "text-sm" : "text-xl"
-          )}>
-            {sidebar.state === "collapsed" ? "G$" : "Grana Familiar"}
-          </h1>
-          {profile && sidebar.state !== "collapsed" && (
-            <p className="text-xs text-muted-foreground mt-1">Olá, {profile.name}</p>
+      {/* Regular sidebar for desktop */}
+      {!isMobile && (
+        <Sidebar
+          className={cn(
+            sidebar.state === "collapsed" ? "w-16" : "w-64",
+            "transition-width duration-300 ease-in-out"
           )}
-        </div>
-        
-        <SidebarContent>
-          {sidebar.state !== "collapsed" && renderMonthSelector()}
+          collapsible="icon"
+        >
+          <SidebarTrigger className="m-2 self-end" />
           
-          <SidebarGroup>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {navItems.map((item) => (
-                  <SidebarMenuItem key={item.id}>
-                    <SidebarMenuButton 
-                      className={cn(
-                        "w-full flex items-center p-2 rounded-md",
-                        activeTab === item.id && "bg-primary/10 text-primary font-medium"
-                      )}
-                      onClick={() => {
-                        setActiveTab(item.id);
-                        if (isMobile) {
-                          // Close sidebar after item selection on mobile
-                          sidebar.setOpen(false);
-                        }
-                      }}
-                    >
-                      <item.icon 
+          <div className="flex flex-col items-center py-4">
+            <h1 className={cn(
+              "font-bold",
+              sidebar.state === "collapsed" ? "text-sm" : "text-xl"
+            )}>
+              {sidebar.state === "collapsed" ? "G$" : "Grana Familiar"}
+            </h1>
+            {profile && sidebar.state !== "collapsed" && (
+              <p className="text-xs text-muted-foreground mt-1">Olá, {profile.name}</p>
+            )}
+          </div>
+          
+          <SidebarContent>
+            {sidebar.state !== "collapsed" && renderMonthSelector()}
+            
+            <SidebarGroup>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {navItems.map((item) => (
+                    <SidebarMenuItem key={item.id}>
+                      <SidebarMenuButton 
                         className={cn(
-                          "h-5 w-5",
-                          sidebar.state === "collapsed" ? "mx-auto" : "mr-2"
-                        )} 
-                      />
-                      {sidebar.state !== "collapsed" && <span>{item.label}</span>}
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        </SidebarContent>
-      </Sidebar>
+                          "w-full flex items-center p-2 rounded-md",
+                          activeTab === item.id && "bg-primary/10 text-primary font-medium"
+                        )}
+                        onClick={() => {
+                          setActiveTab(item.id);
+                        }}
+                      >
+                        <item.icon 
+                          className={cn(
+                            "h-5 w-5",
+                            sidebar.state === "collapsed" ? "mx-auto" : "mr-2"
+                          )} 
+                        />
+                        {sidebar.state !== "collapsed" && <span>{item.label}</span>}
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  ))}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          </SidebarContent>
+        </Sidebar>
+      )}
+
+      {/* Mobile sidebar using Sheet component for better mobile UX */}
+      {isMobile && (
+        <Sheet open={sidebar.open} onOpenChange={sidebar.setOpen}>
+          <SheetContent side="left" className="p-0 w-4/5 max-w-[300px]">
+            <div className="flex flex-col h-full">
+              <div className="flex flex-col items-center py-4">
+                <h1 className="font-bold text-xl">Grana Familiar</h1>
+                {profile && (
+                  <p className="text-xs text-muted-foreground mt-1">Olá, {profile.name}</p>
+                )}
+              </div>
+              
+              <div className="flex-1 overflow-auto">
+                {renderMonthSelector()}
+                
+                <ul className="space-y-1 px-2">
+                  {navItems.map((item) => (
+                    <li key={item.id}>
+                      <button
+                        className={cn(
+                          "w-full flex items-center p-3 rounded-md",
+                          activeTab === item.id && "bg-primary/10 text-primary font-medium"
+                        )}
+                        onClick={() => {
+                          setActiveTab(item.id);
+                          sidebar.setOpen(false);
+                        }}
+                      >
+                        <item.icon className="h-5 w-5 mr-3" />
+                        <span>{item.label}</span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </SheetContent>
+        </Sheet>
+      )}
       
       <div className="flex-1 p-3 md:p-6 overflow-x-hidden">
         <header className="mb-6">
           {isMobile && (
             <button 
-              onClick={toggleMobileSidebar}
+              onClick={() => sidebar.setOpen(true)}
               className="md:hidden mb-4 p-2 rounded-md hover:bg-gray-100 active:bg-gray-200 transition-colors"
               aria-label="Toggle menu"
             >

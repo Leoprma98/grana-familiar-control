@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useEffect } from "react";
 import { 
   Calendar, 
   ChartPie, 
@@ -43,12 +43,21 @@ const AppLayout: React.FC<AppLayoutProps> = ({
   const { profile } = useAuth();
   const isMobile = useIsMobile();
   
-  // Fechar a sidebar automaticamente no mobile
-  React.useEffect(() => {
-    if (isMobile && sidebar.state !== "collapsed") {
-      sidebar.setOpen(false); // Using setOpen(false) instead of collapse()
+  // Handle mobile sidebar initialization
+  useEffect(() => {
+    if (isMobile) {
+      // Initially close sidebar on mobile - use setOpen instead of collapse
+      sidebar.setOpen(false);
+    } else {
+      // On desktop, default to open
+      sidebar.setOpen(true);
     }
   }, [isMobile, sidebar]);
+  
+  // Toggle sidebar function for mobile menu button
+  const toggleMobileSidebar = () => {
+    sidebar.setOpen(!sidebar.open);
+  };
   
   // Navigation items
   const navItems = [
@@ -131,7 +140,10 @@ const AppLayout: React.FC<AppLayoutProps> = ({
                       )}
                       onClick={() => {
                         setActiveTab(item.id);
-                        if (isMobile) sidebar.setOpen(false); // Using setOpen instead of collapse
+                        if (isMobile) {
+                          // Close sidebar after item selection on mobile
+                          sidebar.setOpen(false);
+                        }
                       }}
                     >
                       <item.icon 
@@ -154,8 +166,9 @@ const AppLayout: React.FC<AppLayoutProps> = ({
         <header className="mb-6">
           {isMobile && (
             <button 
-              onClick={() => sidebar.state === "collapsed" ? sidebar.setOpen(true) : sidebar.setOpen(false)}
-              className="md:hidden mb-4 p-2 rounded-md hover:bg-gray-100"
+              onClick={toggleMobileSidebar}
+              className="md:hidden mb-4 p-2 rounded-md hover:bg-gray-100 active:bg-gray-200 transition-colors"
+              aria-label="Toggle menu"
             >
               <Menu className="h-5 w-5" />
             </button>

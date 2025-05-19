@@ -66,21 +66,31 @@ export const createFamily = async (): Promise<Family> => {
 export const findFamilyByCode = async (code: string): Promise<Family | null> => {
   try {
     console.log("Buscando família pelo código:", code);
+    
+    // Usando trim para remover espaços extras que possam ter sido inseridos
+    const cleanCode = code.trim();
+    
+    // Buscar de forma case insensitive usando ilike
     const { data, error } = await supabase
       .from('families')
       .select('*')
-      .eq('code', code)
-      .single();
+      .ilike('code', cleanCode);
     
     if (error) {
       console.error("Erro ao buscar família pelo código:", error.message);
       throw error;
     }
     
-    console.log("Família encontrada:", data);
-    return data as Family;
+    if (data && data.length > 0) {
+      console.log("Família(s) encontrada(s):", data);
+      // Retornar a primeira correspondência
+      return data[0] as Family;
+    }
+    
+    console.log("Nenhuma família encontrada com o código:", cleanCode);
+    return null;
   } catch (error) {
-    console.error("Família não encontrada ou erro:", error);
+    console.error("Erro ao buscar família:", error);
     return null;
   }
 };
@@ -101,5 +111,27 @@ export const logUserActivity = async (userId: string, familyId: string | null, a
   } catch (error) {
     console.error("Erro ao registrar atividade:", error);
     // Não interromper o fluxo por erro no log
+  }
+};
+
+/**
+ * Get all family members for a specific family ID
+ */
+export const getFamilyMembers = async (familyId: string): Promise<any[]> => {
+  try {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('id, name')
+      .eq('family_id', familyId);
+    
+    if (error) {
+      console.error("Erro ao buscar membros da família:", error.message);
+      throw error;
+    }
+    
+    return data || [];
+  } catch (error) {
+    console.error("Erro ao buscar membros da família:", error);
+    return [];
   }
 };

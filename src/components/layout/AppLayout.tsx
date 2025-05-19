@@ -7,7 +7,8 @@ import {
   Receipt, 
   PiggyBank, 
   Wallet, 
-  Menu 
+  Menu,
+  X 
 } from "lucide-react";
 import { useFinance } from "../../contexts/FinanceContext";
 import { useAuth } from "../../contexts/AuthContext";
@@ -26,7 +27,15 @@ import {
 } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { 
+  Drawer, 
+  DrawerClose, 
+  DrawerContent, 
+  DrawerHeader,
+  DrawerFooter,
+  DrawerTitle,
+  DrawerTrigger 
+} from "@/components/ui/drawer";
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -44,6 +53,8 @@ const AppLayout: React.FC<AppLayoutProps> = ({
   const { profile } = useAuth();
   const isMobile = useIsMobile();
   
+  const [isDrawerOpen, setIsDrawerOpen] = React.useState(false);
+  
   // Handle mobile sidebar initialization
   useEffect(() => {
     if (isMobile) {
@@ -54,11 +65,6 @@ const AppLayout: React.FC<AppLayoutProps> = ({
       sidebar.setOpen(true);
     }
   }, [isMobile, sidebar]);
-  
-  // Toggle sidebar function for mobile menu button
-  const toggleMobileSidebar = () => {
-    sidebar.setOpen(!sidebar.open);
-  };
   
   // Navigation items
   const navItems = [
@@ -162,51 +168,57 @@ const AppLayout: React.FC<AppLayoutProps> = ({
         </Sidebar>
       )}
 
-      {/* Mobile sidebar using Sheet component for better mobile UX */}
+      {/* Mobile sidebar using Drawer component for better mobile UX */}
       {isMobile && (
-        <Sheet open={sidebar.open} onOpenChange={sidebar.setOpen}>
-          <SheetContent side="left" className="p-0 w-4/5 max-w-[300px]">
-            <div className="flex flex-col h-full">
-              <div className="flex flex-col items-center py-4">
-                <h1 className="font-bold text-xl">Grana Familiar</h1>
+        <Drawer open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
+          <DrawerTrigger className="sr-only">Open Menu</DrawerTrigger>
+          <DrawerContent className="h-[85vh] pt-0">
+            <DrawerHeader>
+              <DrawerTitle className="text-xl font-bold">
+                Grana Familiar
                 {profile && (
                   <p className="text-xs text-muted-foreground mt-1">Olá, {profile.name}</p>
                 )}
-              </div>
+              </DrawerTitle>
+            </DrawerHeader>
+            <div className="px-4 py-2 flex-1">
+              {renderMonthSelector()}
               
-              <div className="flex-1 overflow-auto">
-                {renderMonthSelector()}
-                
-                <ul className="space-y-1 px-2">
-                  {navItems.map((item) => (
-                    <li key={item.id}>
-                      <button
-                        className={cn(
-                          "w-full flex items-center p-3 rounded-md",
-                          activeTab === item.id && "bg-primary/10 text-primary font-medium"
-                        )}
-                        onClick={() => {
-                          setActiveTab(item.id);
-                          sidebar.setOpen(false);
-                        }}
-                      >
-                        <item.icon className="h-5 w-5 mr-3" />
-                        <span>{item.label}</span>
-                      </button>
-                    </li>
-                  ))}
-                </ul>
+              <div className="space-y-1 mt-4">
+                {navItems.map((item) => (
+                  <button
+                    key={item.id}
+                    className={cn(
+                      "w-full flex items-center p-3 rounded-md",
+                      activeTab === item.id && "bg-primary/10 text-primary font-medium"
+                    )}
+                    onClick={() => {
+                      setActiveTab(item.id);
+                      setIsDrawerOpen(false);
+                    }}
+                  >
+                    <item.icon className="h-5 w-5 mr-3" />
+                    <span>{item.label}</span>
+                  </button>
+                ))}
               </div>
             </div>
-          </SheetContent>
-        </Sheet>
+            <DrawerFooter>
+              <DrawerClose>
+                <div className="flex justify-center w-full">
+                  <X className="h-6 w-6" />
+                </div>
+              </DrawerClose>
+            </DrawerFooter>
+          </DrawerContent>
+        </Drawer>
       )}
       
       <div className="flex-1 p-3 md:p-6 overflow-x-hidden">
         <header className="mb-6">
           {isMobile && (
             <button 
-              onClick={() => sidebar.setOpen(true)}
+              onClick={() => setIsDrawerOpen(true)}
               className="md:hidden mb-4 p-2 rounded-md hover:bg-gray-100 active:bg-gray-200 transition-colors"
               aria-label="Toggle menu"
             >

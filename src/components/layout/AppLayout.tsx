@@ -8,8 +8,10 @@ import {
   PiggyBank, 
   Wallet, 
   Menu,
-  X 
+  X,
+  ArrowLeft
 } from "lucide-react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useFinance } from "../../contexts/FinanceContext";
 import { useAuth } from "../../contexts/AuthContext";
 import { getMonthName } from "../../utils/formatters";
@@ -36,6 +38,7 @@ import {
   DrawerTitle,
   DrawerTrigger 
 } from "@/components/ui/drawer";
+import { Button } from "@/components/ui/button";
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -52,8 +55,18 @@ const AppLayout: React.FC<AppLayoutProps> = ({
   const { currentMonth, currentYear, setCurrentMonth, setCurrentYear } = useFinance();
   const { profile } = useAuth();
   const isMobile = useIsMobile();
+  const navigate = useNavigate();
+  const location = useLocation();
   
   const [isDrawerOpen, setIsDrawerOpen] = React.useState(false);
+  
+  // Check if we're on a page that should show the back button
+  const showBackButton = location.pathname !== "/";
+  
+  // Handle navigation back
+  const handleGoBack = () => {
+    navigate(-1);
+  };
   
   // Handle mobile sidebar initialization
   useEffect(() => {
@@ -216,22 +229,38 @@ const AppLayout: React.FC<AppLayoutProps> = ({
       
       <div className="flex-1 p-3 md:p-6 overflow-x-hidden">
         <header className="mb-6">
-          {isMobile && (
-            <button 
-              onClick={() => setIsDrawerOpen(true)}
-              className="md:hidden mb-4 p-2 rounded-md hover:bg-gray-100 active:bg-gray-200 transition-colors"
-              aria-label="Toggle menu"
-            >
-              <Menu className="h-5 w-5" />
-            </button>
-          )}
-          
-          <h1 className="text-xl md:text-2xl font-bold">
-            {getMonthName(currentMonth)} {currentYear}
-          </h1>
-          <h2 className="text-md md:text-lg font-medium text-gray-600">
-            {navItems.find(item => item.id === activeTab)?.label}
-          </h2>
+          <div className="flex items-center gap-2">
+            {isMobile && (
+              <button 
+                onClick={() => setIsDrawerOpen(true)}
+                className="md:hidden p-2 rounded-md hover:bg-gray-100 active:bg-gray-200 transition-colors"
+                aria-label="Toggle menu"
+              >
+                <Menu className="h-5 w-5" />
+              </button>
+            )}
+            
+            {showBackButton && (
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={handleGoBack}
+                className="mr-2"
+                aria-label="Voltar"
+              >
+                <ArrowLeft className="h-5 w-5" />
+              </Button>
+            )}
+            
+            <div>
+              <h1 className="text-xl md:text-2xl font-bold">
+                {getMonthName(currentMonth)} {currentYear}
+              </h1>
+              <h2 className="text-md md:text-lg font-medium text-gray-600">
+                {navItems.find(item => item.id === activeTab)?.label}
+              </h2>
+            </div>
+          </div>
         </header>
         
         <main className="animate-fade-in">

@@ -123,12 +123,12 @@ const ActivityLogPage: React.FC = () => {
             />
           </div>
           
-          <Select value={filterType || ""} onValueChange={(value) => setFilterType(value || null)}>
+          <Select value={filterType || ""} onValueChange={(value) => setFilterType(value === "" ? null : value)}>
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Filtrar por tipo" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Todos os tipos</SelectItem>
+              <SelectItem value="all">Todos os tipos</SelectItem>
               {actionTypes.map(type => (
                 <SelectItem key={type} value={type}>{type.replace(/_/g, ' ')}</SelectItem>
               ))}

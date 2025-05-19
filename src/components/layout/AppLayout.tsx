@@ -6,39 +6,14 @@ import {
   DollarSign, 
   Receipt, 
   PiggyBank, 
-  Wallet, 
-  Menu,
-  X,
-  ArrowLeft
+  Wallet
 } from "lucide-react";
-import { useNavigate, useLocation } from "react-router-dom";
-import { useFinance } from "../../contexts/FinanceContext";
-import { useAuth } from "../../contexts/AuthContext";
-import { getMonthName } from "../../utils/formatters";
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarTrigger,
-  useSidebar,
-} from "@/components/ui/sidebar";
-import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { 
-  Drawer, 
-  DrawerClose, 
-  DrawerContent, 
-  DrawerHeader,
-  DrawerFooter,
-  DrawerTitle,
-  DrawerTrigger 
-} from "@/components/ui/drawer";
-import { Button } from "@/components/ui/button";
+import { useSidebar } from "@/components/ui/sidebar";
+import { NavItems } from "./types";
+import SidebarComponent from "./Sidebar";
+import MobileDrawer from "./MobileDrawer";
+import Header from "./Header";
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -52,35 +27,11 @@ const AppLayout: React.FC<AppLayoutProps> = ({
   setActiveTab 
 }) => {
   const sidebar = useSidebar();
-  const { currentMonth, currentYear, setCurrentMonth, setCurrentYear } = useFinance();
-  const { profile } = useAuth();
   const isMobile = useIsMobile();
-  const navigate = useNavigate();
-  const location = useLocation();
-  
   const [isDrawerOpen, setIsDrawerOpen] = React.useState(false);
   
-  // Check if we're on a page that should show the back button
-  const showBackButton = location.pathname !== "/";
-  
-  // Handle navigation back
-  const handleGoBack = () => {
-    navigate(-1);
-  };
-  
-  // Handle mobile sidebar initialization
-  useEffect(() => {
-    if (isMobile) {
-      // Initially close sidebar on mobile - use setOpen instead of collapse
-      sidebar.setOpen(false);
-    } else {
-      // On desktop, default to open
-      sidebar.setOpen(true);
-    }
-  }, [isMobile, sidebar]);
-  
   // Navigation items
-  const navItems = [
+  const navItems: NavItems[] = [
     { id: "dashboard", label: "Dashboard", icon: ChartPie },
     { id: "income", label: "Receitas", icon: DollarSign },
     { id: "expenses", label: "Despesas", icon: Receipt },
@@ -88,180 +39,49 @@ const AppLayout: React.FC<AppLayoutProps> = ({
     { id: "allowance", label: "Vale-Alimentação", icon: Wallet },
     { id: "annual", label: "Resumo Anual", icon: Calendar }
   ];
+  
+  // Handle mobile sidebar initialization
+  useEffect(() => {
+    if (isMobile) {
+      sidebar.setOpen(false);
+    } else {
+      sidebar.setOpen(true);
+    }
+  }, [isMobile, sidebar]);
 
-  // Month selector
-  const renderMonthSelector = () => {
-    const months = Array.from({ length: 12 }, (_, i) => i);
-    
-    return (
-      <div className="flex items-center justify-between mb-6 px-4">
-        <select
-          value={currentMonth}
-          onChange={(e) => setCurrentMonth(Number(e.target.value))}
-          className="p-2 rounded-md border border-gray-300 bg-white"
-        >
-          {months.map((month) => (
-            <option key={month} value={month}>
-              {getMonthName(month)}
-            </option>
-          ))}
-        </select>
-        
-        <select
-          value={currentYear}
-          onChange={(e) => setCurrentYear(Number(e.target.value))}
-          className="p-2 rounded-md border border-gray-300 bg-white ml-2"
-        >
-          {[currentYear - 1, currentYear, currentYear + 1].map((year) => (
-            <option key={year} value={year}>
-              {year}
-            </option>
-          ))}
-        </select>
-      </div>
-    );
+  const toggleMobileMenu = () => {
+    setIsDrawerOpen(true);
   };
 
   return (
     <div className="flex min-h-screen w-full">
       {/* Regular sidebar for desktop */}
       {!isMobile && (
-        <Sidebar
-          className={cn(
-            sidebar.state === "collapsed" ? "w-16" : "w-64",
-            "transition-width duration-300 ease-in-out"
-          )}
-          collapsible="icon"
-        >
-          <SidebarTrigger className="m-2 self-end" />
-          
-          <div className="flex flex-col items-center py-4">
-            <h1 className={cn(
-              "font-bold",
-              sidebar.state === "collapsed" ? "text-sm" : "text-xl"
-            )}>
-              {sidebar.state === "collapsed" ? "G$" : "Grana Familiar"}
-            </h1>
-            {profile && sidebar.state !== "collapsed" && (
-              <p className="text-xs text-muted-foreground mt-1">Olá, {profile.name}</p>
-            )}
-          </div>
-          
-          <SidebarContent>
-            {sidebar.state !== "collapsed" && renderMonthSelector()}
-            
-            <SidebarGroup>
-              <SidebarGroupContent>
-                <SidebarMenu>
-                  {navItems.map((item) => (
-                    <SidebarMenuItem key={item.id}>
-                      <SidebarMenuButton 
-                        className={cn(
-                          "w-full flex items-center p-2 rounded-md",
-                          activeTab === item.id && "bg-primary/10 text-primary font-medium"
-                        )}
-                        onClick={() => {
-                          setActiveTab(item.id);
-                        }}
-                      >
-                        <item.icon 
-                          className={cn(
-                            "h-5 w-5",
-                            sidebar.state === "collapsed" ? "mx-auto" : "mr-2"
-                          )} 
-                        />
-                        {sidebar.state !== "collapsed" && <span>{item.label}</span>}
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  ))}
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </SidebarGroup>
-          </SidebarContent>
-        </Sidebar>
+        <SidebarComponent 
+          activeTab={activeTab} 
+          setActiveTab={setActiveTab} 
+          navItems={navItems} 
+        />
       )}
 
-      {/* Mobile sidebar using Drawer component for better mobile UX */}
+      {/* Mobile sidebar using Drawer component */}
       {isMobile && (
-        <Drawer open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
-          <DrawerTrigger className="sr-only">Open Menu</DrawerTrigger>
-          <DrawerContent className="h-[85vh] pt-0">
-            <DrawerHeader>
-              <DrawerTitle className="text-xl font-bold">
-                Grana Familiar
-                {profile && (
-                  <p className="text-xs text-muted-foreground mt-1">Olá, {profile.name}</p>
-                )}
-              </DrawerTitle>
-            </DrawerHeader>
-            <div className="px-4 py-2 flex-1">
-              {renderMonthSelector()}
-              
-              <div className="space-y-1 mt-4">
-                {navItems.map((item) => (
-                  <button
-                    key={item.id}
-                    className={cn(
-                      "w-full flex items-center p-3 rounded-md",
-                      activeTab === item.id && "bg-primary/10 text-primary font-medium"
-                    )}
-                    onClick={() => {
-                      setActiveTab(item.id);
-                      setIsDrawerOpen(false);
-                    }}
-                  >
-                    <item.icon className="h-5 w-5 mr-3" />
-                    <span>{item.label}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-            <DrawerFooter>
-              <DrawerClose>
-                <div className="flex justify-center w-full">
-                  <X className="h-6 w-6" />
-                </div>
-              </DrawerClose>
-            </DrawerFooter>
-          </DrawerContent>
-        </Drawer>
+        <MobileDrawer 
+          isOpen={isDrawerOpen} 
+          setIsOpen={setIsDrawerOpen} 
+          activeTab={activeTab} 
+          setActiveTab={setActiveTab} 
+          navItems={navItems} 
+        />
       )}
       
       <div className="flex-1 p-3 md:p-6 overflow-x-hidden">
-        <header className="mb-6">
-          <div className="flex items-center gap-2">
-            {isMobile && (
-              <button 
-                onClick={() => setIsDrawerOpen(true)}
-                className="md:hidden p-2 rounded-md hover:bg-gray-100 active:bg-gray-200 transition-colors"
-                aria-label="Toggle menu"
-              >
-                <Menu className="h-5 w-5" />
-              </button>
-            )}
-            
-            {showBackButton && (
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                onClick={handleGoBack}
-                className="mr-2"
-                aria-label="Voltar"
-              >
-                <ArrowLeft className="h-5 w-5" />
-              </Button>
-            )}
-            
-            <div>
-              <h1 className="text-xl md:text-2xl font-bold">
-                {getMonthName(currentMonth)} {currentYear}
-              </h1>
-              <h2 className="text-md md:text-lg font-medium text-gray-600">
-                {navItems.find(item => item.id === activeTab)?.label}
-              </h2>
-            </div>
-          </div>
-        </header>
+        <Header 
+          isMobile={isMobile} 
+          activeTab={activeTab} 
+          navItems={navItems} 
+          toggleMobileMenu={toggleMobileMenu} 
+        />
         
         <main className="animate-fade-in">
           {children}

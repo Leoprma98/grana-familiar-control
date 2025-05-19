@@ -1,6 +1,9 @@
-import React, { createContext, useState, useContext, ReactNode } from "react";
+import React, { createContext, useState, useContext, ReactNode, useEffect } from "react";
 import { v4 as uuidv4 } from "uuid";
 import { MonthData, Income, Expense, SavingsGoal, FoodAllowance, Month, MonthSummary } from "../types/finance";
+
+// Storage key for persisting data in localStorage
+const FINANCE_STORAGE_KEY = "finance_data_v1";
 
 // Generate initial empty data for all months of the current year
 const generateEmptyYearData = (): MonthData[] => {
@@ -19,6 +22,28 @@ const generateEmptyYearData = (): MonthData[] => {
   }
 
   return months;
+};
+
+// Helper function to load data from localStorage
+const loadPersistedData = (): MonthData[] => {
+  try {
+    const savedData = localStorage.getItem(FINANCE_STORAGE_KEY);
+    if (savedData) {
+      return JSON.parse(savedData);
+    }
+  } catch (error) {
+    console.error("Error loading finance data from localStorage:", error);
+  }
+  return generateEmptyYearData();
+};
+
+// Helper function to save data to localStorage
+const persistData = (data: MonthData[]): void => {
+  try {
+    localStorage.setItem(FINANCE_STORAGE_KEY, JSON.stringify(data));
+  } catch (error) {
+    console.error("Error saving finance data to localStorage:", error);
+  }
 };
 
 interface FinanceContextType {
@@ -48,7 +73,13 @@ export const FinanceContext = createContext<FinanceContextType | undefined>(unde
 export const FinanceProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [currentMonth, setCurrentMonth] = useState<number>(new Date().getMonth());
   const [currentYear, setCurrentYear] = useState<number>(new Date().getFullYear());
-  const [monthsData, setMonthsData] = useState<MonthData[]>(generateEmptyYearData());
+  const [monthsData, setMonthsData] = useState<MonthData[]>(loadPersistedData());
+
+  // Persist data whenever it changes
+  useEffect(() => {
+    persistData(monthsData);
+    console.log("Finance data saved to localStorage", monthsData);
+  }, [monthsData]);
 
   const getCurrentMonthData = (): MonthData => {
     const currentData = monthsData.find(
@@ -66,7 +97,8 @@ export const FinanceProvider: React.FC<{ children: ReactNode }> = ({ children })
         foodAllowances: []
       };
       
-      setMonthsData([...monthsData, newMonthData]);
+      const updatedData = [...monthsData, newMonthData];
+      setMonthsData(updatedData);
       return newMonthData;
     }
     
@@ -75,7 +107,6 @@ export const FinanceProvider: React.FC<{ children: ReactNode }> = ({ children })
 
   // Income operations
   const addIncome = (income: Omit<Income, "id">) => {
-    const currentData = getCurrentMonthData();
     const updatedMonthsData = monthsData.map((monthData) => {
       if (monthData.month === currentMonth && monthData.year === currentYear) {
         return {
@@ -132,6 +163,7 @@ export const FinanceProvider: React.FC<{ children: ReactNode }> = ({ children })
     });
     
     setMonthsData(updatedMonthsData);
+    console.log("Added expense:", expense);
   };
 
   const updateExpense = (expense: Expense) => {
@@ -177,6 +209,7 @@ export const FinanceProvider: React.FC<{ children: ReactNode }> = ({ children })
     });
     
     setMonthsData(updatedMonthsData);
+    console.log("Added savings goal:", goal);
   };
 
   const updateSavingsGoal = (goal: SavingsGoal) => {
@@ -222,6 +255,7 @@ export const FinanceProvider: React.FC<{ children: ReactNode }> = ({ children })
     });
     
     setMonthsData(updatedMonthsData);
+    console.log("Added food allowance:", allowance);
   };
 
   const updateFoodAllowance = (allowance: FoodAllowance) => {
@@ -270,7 +304,7 @@ export const FinanceProvider: React.FC<{ children: ReactNode }> = ({ children })
     const totalIncome = monthData.incomes.reduce((sum, income) => sum + income.amount, 0);
     const totalExpenses = monthData.expenses.reduce((sum, expense) => sum + expense.amount, 0);
     const totalSaved = monthData.savingsGoals.reduce((sum, goal) => sum + goal.savedAmount, 0);
-    // Fix: Calculate balance as income minus expenses, WITHOUT subtracting saved amount
+    // Calculate balance as income minus expenses, WITHOUT subtracting saved amount
     const balance = totalIncome - totalExpenses;
     
     return {

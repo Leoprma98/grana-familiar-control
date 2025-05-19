@@ -14,11 +14,21 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { getFamilyMembers } from "@/utils/authUtils";
+import { useNavigate } from "react-router-dom";
+import Header from "@/components/layout/Header";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const ProfilePage: React.FC = () => {
   const { user, profile, family, updateProfile, joinFamily, signOut } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [familyMembers, setFamilyMembers] = useState<any[]>([]);
+  const navigate = useNavigate();
+  const isMobile = useIsMobile();
+  
+  // Header configuration for consistency with other pages
+  const navItems = [{ id: "profile", label: "Perfil do Usuário" }];
+  const activeTab = "profile";
+  const toggleMobileMenu = () => {}; // Empty function as we don't need mobile menu here
   
   // Esquema de validação para atualização de perfil
   const profileSchema = z.object({
@@ -116,9 +126,13 @@ const ProfilePage: React.FC = () => {
   
   return (
     <div className="container max-w-3xl mx-auto p-4 space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Perfil do Usuário</h1>
-      </div>
+      {/* Added Header component for consistency */}
+      <Header 
+        isMobile={isMobile}
+        activeTab={activeTab}
+        navItems={navItems}
+        toggleMobileMenu={toggleMobileMenu}
+      />
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card className="md:col-span-2">

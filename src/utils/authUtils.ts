@@ -68,13 +68,31 @@ export const findFamilyByCode = async (code: string): Promise<Family | null> => 
     console.log("Buscando família pelo código:", code);
     
     // Usando trim para remover espaços extras que possam ter sido inseridos
-    const cleanCode = code.trim();
+    const cleanCode = code.trim().toUpperCase(); // Convertendo para uppercase para garantir correspondência
     
-    // Buscar de forma case insensitive usando ilike
+    console.log("Código limpo para busca:", cleanCode);
+    
+    // Buscar diretamente sem filtros de case sensitivity primeiro
+    const { data: exactData, error: exactError } = await supabase
+      .from('families')
+      .select('*')
+      .eq('code', cleanCode);
+      
+    if (exactError) {
+      console.error("Erro ao buscar família pelo código exato:", exactError.message);
+    }
+    
+    // Se encontramos uma correspondência exata
+    if (exactData && exactData.length > 0) {
+      console.log("Família encontrada com busca exata:", exactData);
+      return exactData[0] as Family;
+    }
+    
+    // Segunda tentativa - buscar de forma case insensitive usando ilike
     const { data, error } = await supabase
       .from('families')
       .select('*')
-      .ilike('code', cleanCode);
+      .ilike('code', `%${cleanCode}%`);
     
     if (error) {
       console.error("Erro ao buscar família pelo código:", error.message);
@@ -82,9 +100,21 @@ export const findFamilyByCode = async (code: string): Promise<Family | null> => 
     }
     
     if (data && data.length > 0) {
-      console.log("Família(s) encontrada(s):", data);
+      console.log("Família(s) encontrada(s) com busca parcial:", data);
       // Retornar a primeira correspondência
       return data[0] as Family;
+    }
+    
+    // Terceira tentativa - listar todas as famílias para debug
+    const { data: allFamilies, error: allError } = await supabase
+      .from('families')
+      .select('*')
+      .limit(10);
+      
+    if (allError) {
+      console.error("Erro ao listar todas as famílias:", allError.message);
+    } else {
+      console.log("Todas as famílias disponíveis:", allFamilies);
     }
     
     console.log("Nenhuma família encontrada com o código:", cleanCode);
@@ -119,6 +149,13 @@ export const logUserActivity = async (userId: string, familyId: string | null, a
  */
 export const getFamilyMembers = async (familyId: string): Promise<any[]> => {
   try {
+    if (!familyId) {
+      console.error("ID da família não fornecido para getFamilyMembers");
+      return [];
+    }
+    
+    console.log("Buscando membros da família ID:", familyId);
+    
     const { data, error } = await supabase
       .from('profiles')
       .select('id, name')
@@ -129,6 +166,7 @@ export const getFamilyMembers = async (familyId: string): Promise<any[]> => {
       throw error;
     }
     
+    console.log("Membros da família encontrados:", data?.length || 0, data);
     return data || [];
   } catch (error) {
     console.error("Erro ao buscar membros da família:", error);

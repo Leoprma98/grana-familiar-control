@@ -80,10 +80,11 @@ export const signUpUser = async (email: string, password: string, name: string, 
       // Procurar família existente pelo código
       family = await findFamilyByCode(familyCode);
       if (!family) {
+        console.error("Código de família não encontrado:", familyCode);
         toast.error("Erro no cadastro", {
           description: "Código de família não encontrado"
         });
-        throw new Error("Código de família não encontrado");
+        throw new Error(`Código de família não encontrado: ${familyCode}`);
       }
     } else {
       // Criar nova família
@@ -193,6 +194,8 @@ export const signOutUser = async (): Promise<void> => {
  */
 export const updateUserProfile = async (userId: string, familyId: string | null, name: string): Promise<void> => {
   try {
+    console.log("Atualizando perfil:", userId, name);
+    
     const { error } = await supabase
       .from('profiles')
       .update({ name, updated_at: new Date().toISOString() })
@@ -203,6 +206,7 @@ export const updateUserProfile = async (userId: string, familyId: string | null,
       throw error;
     }
     
+    console.log("Perfil atualizado com sucesso");
     toast.success("Perfil atualizado com sucesso!");
   } catch (error: any) {
     console.error("Erro completo ao atualizar perfil:", error);
@@ -218,14 +222,19 @@ export const updateUserProfile = async (userId: string, familyId: string | null,
  */
 export const joinFamily = async (userId: string, profileId: string, familyCode: string): Promise<Family> => {
   try {
+    console.log("Tentando ingressar em família com código:", familyCode);
+    
     // Encontrar família pelo código
     const family = await findFamilyByCode(familyCode);
     if (!family) {
+      console.error("Família não encontrada para código:", familyCode);
       toast.error("Erro ao ingressar na família", {
         description: "Código de família não encontrado"
       });
-      throw new Error("Código de família não encontrado");
+      throw new Error(`Código de família não encontrado: ${familyCode}`);
     }
+    
+    console.log("Família encontrada:", family);
     
     // Atualizar perfil do usuário com nova família
     const { error } = await supabase
@@ -241,6 +250,7 @@ export const joinFamily = async (userId: string, profileId: string, familyCode: 
       throw error;
     }
     
+    console.log("Ingressado em nova família com sucesso");
     toast.success("Ingressado em nova família com sucesso!");
     
     return family;

@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,10 +13,12 @@ import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { getFamilyMembers } from "@/utils/authUtils";
 
 const ProfilePage: React.FC = () => {
   const { user, profile, family, updateProfile, joinFamily, signOut } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [familyMembers, setFamilyMembers] = useState<any[]>([]);
   
   // Esquema de validação para atualização de perfil
   const profileSchema = z.object({
@@ -46,8 +48,26 @@ const ProfilePage: React.FC = () => {
     }
   });
   
+  // Buscar membros da família quando o componente carregar
+  useEffect(() => {
+    const loadFamilyMembers = async () => {
+      if (profile?.family_id) {
+        try {
+          console.log("Carregando membros da família:", profile.family_id);
+          const members = await getFamilyMembers(profile.family_id);
+          console.log("Membros carregados:", members);
+          setFamilyMembers(members || []);
+        } catch (error) {
+          console.error("Erro ao carregar membros da família:", error);
+        }
+      }
+    };
+    
+    loadFamilyMembers();
+  }, [profile?.family_id]);
+  
   // Atualizar o formulário quando o perfil mudar
-  React.useEffect(() => {
+  useEffect(() => {
     if (profile) {
       profileForm.setValue("name", profile.name);
     }
@@ -156,6 +176,30 @@ const ProfilePage: React.FC = () => {
                 Compartilhe este código com os membros da sua família para que eles possam
                 acessar as mesmas informações financeiras.
               </p>
+            </div>
+            
+            <Separator />
+            
+            <div>
+              <p className="font-medium mb-2">Membros da Família</p>
+              {familyMembers.length > 0 ? (
+                <div className="space-y-2">
+                  {familyMembers.map((member) => (
+                    <div key={member.id} className="flex items-center p-2 border rounded">
+                      <Avatar className="h-8 w-8 mr-2">
+                        <AvatarFallback className="text-xs">
+                          {member.name?.charAt(0).toUpperCase() || "?"}
+                        </AvatarFallback>
+                      </Avatar>
+                      <span>{member.name}</span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  Nenhum membro encontrado.
+                </p>
+              )}
             </div>
             
             <Separator />

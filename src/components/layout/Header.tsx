@@ -24,8 +24,8 @@ const Header: React.FC<HeaderProps> = ({
   const location = useLocation();
   const { currentMonth, currentYear } = useFinance();
   
-  // Check if we're on a page that should show the back button
-  const showBackButton = location.pathname !== "/";
+  // Check if we're on a page that should show the back button - todas as páginas mostram o botão
+  const showBackButton = true; // Alterado para sempre mostrar a seta de voltar
   
   // Handle navigation back
   const handleGoBack = () => {

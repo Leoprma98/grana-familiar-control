@@ -26,7 +26,7 @@ const ProfilePage: React.FC = () => {
   const isMobile = useIsMobile();
   
   // Header configuration for consistency with other pages
-  const navItems = [{ id: "profile", label: "Perfil do Usuário" }];
+  const navItems = [{ id: "profile", label: "Perfil do Usuário", icon: User }];
   const activeTab = "profile";
   const toggleMobileMenu = () => {}; // Empty function as we don't need mobile menu here
   

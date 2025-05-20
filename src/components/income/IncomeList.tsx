@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useFinance } from "../../contexts/FinanceContext";
 import { formatCurrency, formatDate } from "../../utils/formatters";
 import { IncomeType, Person } from "../../types/finance";
@@ -39,9 +39,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { DollarSign, Plus, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 
 const IncomeList: React.FC = () => {
   const { getCurrentMonthData, addIncome, updateIncome, deleteIncome, getMonthSummary, currentMonth, currentYear } = useFinance();
+  const { user, profile } = useAuth();
   const monthData = getCurrentMonthData();
   const summary = getMonthSummary(currentMonth, currentYear);
   
@@ -50,11 +53,58 @@ const IncomeList: React.FC = () => {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   
   const [currentIncome, setCurrentIncome] = useState<any>({
-    person: "Léo",
+    person: "",
     type: "pagamento",
     amount: 0,
     date: new Date().toISOString().substring(0, 10),
   });
+
+  // State for family members
+  const [familyMembers, setFamilyMembers] = useState<{ value: string; label: string }[]>([]);
+  
+  // Load family members when component mounts
+  useEffect(() => {
+    const loadFamilyMembers = async () => {
+      if (profile?.family_id) {
+        try {
+          // Fetch all profiles in the same family
+          const { data, error } = await supabase
+            .from('profiles')
+            .select('id, name')
+            .eq('family_id', profile.family_id);
+            
+          if (error) {
+            throw error;
+          }
+          
+          if (data) {
+            // Convert to the format expected by our form
+            const members = data.map(member => ({
+              value: member.name,
+              label: member.name
+            }));
+            
+            // Add "Outro" option
+            members.push({ value: "Outro", label: "Outro" });
+            
+            setFamilyMembers(members);
+            
+            // Set default person to current user's name
+            if (members.length > 0 && profile.name) {
+              setCurrentIncome(prev => ({
+                ...prev,
+                person: profile.name
+              }));
+            }
+          }
+        } catch (error) {
+          console.error("Error loading family members:", error);
+        }
+      }
+    };
+    
+    loadFamilyMembers();
+  }, [profile]);
 
   // Handle Form Input Changes
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -66,10 +116,10 @@ const IncomeList: React.FC = () => {
     setCurrentIncome({ ...currentIncome, [name]: value });
   };
 
-  const handleSaveIncome = () => {
+  const handleSaveIncome = async () => {
     try {
       if (currentIncome.id) {
-        updateIncome({
+        await updateIncome({
           id: currentIncome.id,
           person: currentIncome.person,
           type: currentIncome.type as IncomeType,
@@ -79,7 +129,7 @@ const IncomeList: React.FC = () => {
         toast.success("Receita atualizada com sucesso!");
         setIsEditDialogOpen(false);
       } else {
-        addIncome({
+        await addIncome({
           person: currentIncome.person,
           type: currentIncome.type as IncomeType,
           amount: parseFloat(currentIncome.amount),
@@ -95,16 +145,20 @@ const IncomeList: React.FC = () => {
     }
   };
 
-  const handleDeleteIncome = () => {
-    deleteIncome(currentIncome.id);
-    toast.success("Receita removida com sucesso!");
-    setIsDeleteDialogOpen(false);
-    resetForm();
+  const handleDeleteIncome = async () => {
+    try {
+      await deleteIncome(currentIncome.id);
+      toast.success("Receita removida com sucesso!");
+      setIsDeleteDialogOpen(false);
+      resetForm();
+    } catch (error) {
+      toast.error("Erro ao remover a receita. Tente novamente.");
+    }
   };
 
   const resetForm = () => {
     setCurrentIncome({
-      person: "Léo",
+      person: profile?.name || "",
       type: "pagamento",
       amount: 0,
       date: new Date().toISOString().substring(0, 10),
@@ -129,12 +183,6 @@ const IncomeList: React.FC = () => {
     { value: "vale", label: "Vale" },
     { value: "extra", label: "Extra" },
     { value: "outros", label: "Outros" },
-  ];
-
-  const persons = [
-    { value: "Léo", label: "Léo" },
-    { value: "Cat", label: "Cat" },
-    { value: "Outro", label: "Outro" },
   ];
 
   // Group incomes by person
@@ -163,7 +211,7 @@ const IncomeList: React.FC = () => {
                 <SelectValue placeholder="Selecione a pessoa" />
               </SelectTrigger>
               <SelectContent>
-                {persons.map((person) => (
+                {familyMembers.map((person) => (
                   <SelectItem key={person.value} value={person.value}>
                     {person.label}
                   </SelectItem>
@@ -238,6 +286,22 @@ const IncomeList: React.FC = () => {
       </DialogFooter>
     </>
   );
+
+  // Show loading state while family members are loaded
+  if (familyMembers.length === 0) {
+    return (
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <div>
+            <h2 className="text-3xl font-bold">Receitas</h2>
+            <p className="text-muted-foreground">
+              Carregando informações da família...
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

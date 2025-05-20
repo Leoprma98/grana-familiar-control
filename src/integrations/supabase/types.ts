@@ -188,6 +188,65 @@ export type Database = {
           },
         ]
       }
+      movements: {
+        Row: {
+          amount: number
+          category: string | null
+          created_at: string
+          date: string
+          family_id: string
+          id: string
+          name: string | null
+          person_name: string
+          status: string | null
+          target_amount: number | null
+          target_month: number | null
+          target_year: number | null
+          type: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          category?: string | null
+          created_at?: string
+          date: string
+          family_id: string
+          id?: string
+          name?: string | null
+          person_name: string
+          status?: string | null
+          target_amount?: number | null
+          target_month?: number | null
+          target_year?: number | null
+          type: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          category?: string | null
+          created_at?: string
+          date?: string
+          family_id?: string
+          id?: string
+          name?: string | null
+          person_name?: string
+          status?: string | null
+          target_amount?: number | null
+          target_month?: number | null
+          target_year?: number | null
+          type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "movements_family_id_fkey"
+            columns: ["family_id"]
+            isOneToOne: false
+            referencedRelation: "families"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string

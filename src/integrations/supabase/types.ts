@@ -335,6 +335,14 @@ export type Database = {
         Args: { family_code: string }
         Returns: Json
       }
+      find_family_by_code: {
+        Args: { code_to_find: string }
+        Returns: {
+          code: string
+          created_at: string
+          id: string
+        }[]
+      }
       generate_family_code: {
         Args: Record<PropertyKey, never>
         Returns: string

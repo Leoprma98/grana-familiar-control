@@ -1,4 +1,3 @@
-
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import type { Family } from "@/types/auth";
@@ -72,27 +71,10 @@ export const findFamilyByCode = async (code: string): Promise<Family | null> => 
     
     console.log("Código limpo para busca:", cleanCode);
     
-    // Buscar diretamente sem filtros de case sensitivity primeiro
-    const { data: exactData, error: exactError } = await supabase
-      .from('families')
-      .select('*')
-      .eq('code', cleanCode);
-      
-    if (exactError) {
-      console.error("Erro ao buscar família pelo código exato:", exactError.message);
-    }
-    
-    // Se encontramos uma correspondência exata
-    if (exactData && exactData.length > 0) {
-      console.log("Família encontrada com busca exata:", exactData);
-      return exactData[0] as Family;
-    }
-    
-    // Segunda tentativa - buscar de forma case insensitive usando ilike
+    // Usar a função find_family_by_code que criamos no banco de dados
+    // Esta função tem SECURITY DEFINER e pode ser usada sem autenticação
     const { data, error } = await supabase
-      .from('families')
-      .select('*')
-      .ilike('code', `%${cleanCode}%`);
+      .rpc('find_family_by_code', { code_to_find: cleanCode });
     
     if (error) {
       console.error("Erro ao buscar família pelo código:", error.message);
@@ -100,15 +82,18 @@ export const findFamilyByCode = async (code: string): Promise<Family | null> => 
     }
     
     if (data && data.length > 0) {
-      console.log("Família(s) encontrada(s) com busca parcial:", data);
-      // Retornar a primeira correspondência
+      console.log("Família encontrada:", data);
       return data[0] as Family;
     }
     
-    // Terceira tentativa - listar todas as famílias para debug
+    // Log para debug se não encontrou
+    console.log("Nenhuma família encontrada com o código:", cleanCode);
+    
+    // Também vamos listar todas as famílias existentes para fins de debug
+    console.log("Consultando todas as famílias disponíveis para debug");
     const { data: allFamilies, error: allError } = await supabase
       .from('families')
-      .select('*')
+      .select('id, code, created_at')
       .limit(10);
       
     if (allError) {
@@ -117,7 +102,6 @@ export const findFamilyByCode = async (code: string): Promise<Family | null> => 
       console.log("Todas as famílias disponíveis:", allFamilies);
     }
     
-    console.log("Nenhuma família encontrada com o código:", cleanCode);
     return null;
   } catch (error) {
     console.error("Erro ao buscar família:", error);

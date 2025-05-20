@@ -12,17 +12,34 @@ interface HeaderProps {
   activeTab: string;
   navItems: NavItems[];
   toggleMobileMenu: () => void;
+  customTitle?: string;
+  customSubtitle?: string;
 }
 
 const Header: React.FC<HeaderProps> = ({ 
   isMobile, 
   activeTab, 
   navItems,
-  toggleMobileMenu 
+  toggleMobileMenu,
+  customTitle,
+  customSubtitle
 }) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { currentMonth, currentYear } = useFinance();
+  
+  // Try to access finance context, but don't crash if not available
+  let currentMonthName, currentYear, subtitle;
+  try {
+    const finance = useFinance();
+    currentMonthName = getMonthName(finance.currentMonth);
+    currentYear = finance.currentYear;
+    subtitle = navItems.find(item => item.id === activeTab)?.label;
+  } catch (error) {
+    // If useFinance fails, use the custom title/subtitle instead
+    currentMonthName = customTitle || "";
+    currentYear = null;
+    subtitle = customSubtitle || navItems.find(item => item.id === activeTab)?.label || "";
+  }
   
   // Check if we're on a page that should show the back button - todas as páginas mostram o botão
   const showBackButton = true; // Alterado para sempre mostrar a seta de voltar
@@ -59,10 +76,10 @@ const Header: React.FC<HeaderProps> = ({
         
         <div>
           <h1 className="text-xl md:text-2xl font-bold">
-            {getMonthName(currentMonth)} {currentYear}
+            {currentMonthName}{currentYear ? ` ${currentYear}` : ''}
           </h1>
           <h2 className="text-md md:text-lg font-medium text-gray-600">
-            {navItems.find(item => item.id === activeTab)?.label}
+            {subtitle}
           </h2>
         </div>
       </div>

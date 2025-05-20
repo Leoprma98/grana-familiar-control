@@ -126,12 +126,14 @@ const ProfilePage: React.FC = () => {
   
   return (
     <div className="container max-w-3xl mx-auto p-4 space-y-6">
-      {/* Added Header component for consistency */}
+      {/* Updated Header component with custom title */}
       <Header 
         isMobile={isMobile}
         activeTab={activeTab}
         navItems={navItems}
         toggleMobileMenu={toggleMobileMenu}
+        customTitle="Perfil do Usuário"
+        customSubtitle="Gerenciamento de conta"
       />
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
